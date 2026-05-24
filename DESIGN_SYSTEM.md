@@ -1,0 +1,209 @@
+# AI Test Agent — Design System
+
+> 基于 UI/UX Design Guide + UI/UX Pro Max 设计系统生成器产出
+> 主题：深色 OLED 模式 · 面向测试仪表盘场景
+
+---
+
+## 1. 品牌标识
+
+| 属性 | 值 |
+|------|-----|
+| 项目名称 | AI Test Agent |
+| 设计模式 | Real-Time Monitoring |
+| 目标氛围 | 技术、精准、实时、自动化 |
+| 字体对 | Fira Code（标题/代码） + Fira Sans（正文） |
+| 设计工具 | Figma + WebAIM Contrast Checker |
+
+---
+
+## 2. 色彩系统
+
+### 2.1 主色调
+
+| Token | CSS Variable | Hex | 用途 |
+|-------|-------------|-----|------|
+| `--color-bg` | `--bg` | `#020617` | 页面背景（OLED 纯黑） |
+| `--color-surface` | `--surface` | `#0F172A` | 卡片/面板背景 |
+| `--color-surface-elevated` | `--surface-elevated` | `#1E293B` | 悬浮状态/模态框背景 |
+| `--color-border` | `--border` | `#334155` | 边框/分割线 |
+| `--color-text-primary` | `--text-primary` | `#F8FAFC` | 主要文本 |
+| `--color-text-secondary` | `--text-secondary` | `#94A3B8` | 次要文本/说明 |
+| `--color-text-muted` | `--text-muted` | `#64748B` | 禁用状态/占位符 |
+
+### 2.2 语义色
+
+| Token | Hex | 用途 |
+|-------|-----|------|
+| `--color-success` | `#22C55E` | 测试通过/成功状态 |
+| `--color-error` | `#EF4444` | 测试失败/错误状态 |
+| `--color-warning` | `#F59E0B` | 警告/待定状态 |
+| `--color-info` | `#3B82F6` | 信息/运行中状态 |
+| `--color-fix` | `#A855F7` | 自愈修复中/已修复 |
+
+### 2.3 语义色使用规范
+
+```css
+.success  { color: #22C55E; background: rgba(34,197,94,0.1); }
+.error    { color: #EF4444; background: rgba(239,68,68,0.1); }
+.warning  { color: #F59E0B; background: rgba(245,158,11,0.1); }
+.info     { color: #3B82F6; background: rgba(59,130,246,0.1); }
+.fix      { color: #A855F7; background: rgba(168,85,247,0.1); }
+```
+
+> **可访问性：** 所有语义色在 `#020617` 背景上文本对比度均 ≥ 4.5:1（WCAG AA）
+> **注意：** 不单独依赖颜色传达状态信息，始终配合图标/文字标签
+
+---
+
+## 3. 排版系统
+
+### 3.1 字体栈
+
+```css
+--font-heading: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+--font-body:    'Fira Sans', -apple-system, 'Segoe UI', sans-serif;
+--font-mono:    'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+```
+
+### 3.2 字号比例尺（8px 基线）
+
+| Token | Size | Line Height | 用途 |
+|-------|------|-------------|------|
+| `--text-xs` | 12px | 16px | 辅助信息、时间戳 |
+| `--text-sm` | 14px | 20px | 次要文本、元数据 |
+| `--text-base` | 16px | 24px | 正文 |
+| `--text-lg` | 18px | 28px | 强调正文 |
+| `--text-xl` | 20px | 28px | 小标题 |
+| `--text-2xl` | 24px | 32px | 区块标题 |
+| `--text-3xl` | 30px | 36px | 页面标题 |
+| `--text-4xl` | 36px | 40px | 仪表盘大标题 |
+
+### 3.3 字重
+
+```css
+--weight-normal: 400;
+--weight-medium: 500;
+--weight-semibold: 600;
+--weight-bold: 700;
+```
+
+---
+
+## 4. 间距系统（8px 网格）
+
+| Token | Pixels | 用途 |
+|-------|--------|------|
+| `--space-1` | 4px | 微间距 |
+| `--space-2` | 8px | 密集布局间隙 |
+| `--space-3` | 12px | 元素内边距 |
+| `--space-4` | 16px | 卡片内边距 |
+| `--space-6` | 24px | 区块间距 |
+| `--space-8` | 32px | 卡片外间距 |
+| `--space-12` | 48px | 大区块间距 |
+| `--space-16` | 64px | 页面分段间距 |
+
+---
+
+## 5. 圆角与阴影
+
+### 5.1 圆角
+
+| Token | Value | 用途 |
+|-------|-------|------|
+| `--radius-sm` | 4px | 小元素、标签 |
+| `--radius-md` | 8px | 卡片、输入框 |
+| `--radius-lg` | 12px | 模态框、面板 |
+| `--radius-xl` | 16px | 弹窗 |
+| `--radius-full` | 9999px | 头像、徽章 |
+
+### 5.2 阴影
+
+| Token | Value |
+|-------|-------|
+| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.3)` |
+| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.4)` |
+| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.5)` |
+| `--shadow-glow-green` | `0 0 10px rgba(34,197,94,0.3)` |
+| `--shadow-glow-red` | `0 0 10px rgba(239,68,68,0.3)` |
+| `--shadow-glow-purple` | `0 0 10px rgba(168,85,247,0.3)` |
+
+---
+
+## 6. 微动效
+
+| 场景 | 属性 | 时长 | 缓动 |
+|------|------|------|------|
+| Hover | `transform: scale(1.02)` | 200ms | ease-out |
+| Click | `transform: scale(0.97)` | 150ms | ease-in |
+| 页面切换 | `opacity + translateY` | 300ms | ease-out |
+| 状态变更 | `background-color` | 300ms | ease |
+| Loading | `opacity: 0.6` 脉冲 | 1.5s 循环 | ease-in-out |
+| Toast 出现 | `translateY + opacity` | 250ms | ease-out |
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+---
+
+## 7. Z-Index 分层系统
+
+| Layer | Value | 元素 |
+|-------|-------|------|
+| 基础 | `1` | 页面内容 |
+| 粘性 | `10` | 导航栏、表头 |
+| 悬浮 | `20` | 下拉菜单、Tooltip |
+| 覆盖 | `30` | 模态遮罩 |
+| 模态 | `40` | 模态框 |
+| Toast | `50` | 通知消息 |
+| 加载 | `60` | Loading 全屏层 |
+
+---
+
+## 8. 可访问性清单
+
+- [ ] 文本对比度 ≥ 4.5:1（小文本）/ 3:1（大文本）
+- [ ] UI 组件对比度 ≥ 3:1
+- [ ] 焦点状态：`outline: 2px solid #3B82F6; outline-offset: 2px`
+- [ ] 键盘导航：Tab 顺序与视觉顺序一致
+- [ ] 语义 HTML：`<nav>` `<main>` `<article>` `<aside>`
+- [ ] ARIA 标签：图标按钮、动态区域 `aria-live`
+- [ ] 颜色非唯一信息载体：始终配合图标/文本
+- [ ] `prefers-reduced-motion` 尊重用户偏好
+- [ ] Touch target ≥ 44x44px（移动端）
+
+---
+
+## 9. 响应式断点
+
+| 断点 | 宽度 | 布局 |
+|------|------|------|
+| `--bp-mobile` | 375px | 单列堆叠 |
+| `--bp-tablet` | 768px | 双列网格 |
+| `--bp-laptop` | 1024px | 三列 + 侧边栏 |
+| `--bp-desktop` | 1440px | 完整仪表盘布局 |
+
+移动端优先原则：默认单列，用 `min-width` 向上扩展。
+
+---
+
+## 10. 预交付检查
+
+- [x] 色彩令牌定义完成
+- [ ] 排版比例尺定义完成
+- [ ] 间距体系定义完成（4-8-12-16-24-32-48-64）
+- [ ] 组件库选择（Shadcn/ui + Tailwind CSS 是推荐方案）
+- [ ] 移动端断点规划
+- [ ] WCAG 对比度已检查
+- [ ] 微动效列表定义
+- [ ] 网格布局草图完成
+
+---
+
+*Generated by UI/UX Pro Max Design System Generator · 2026*

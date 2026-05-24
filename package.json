@@ -1,0 +1,250 @@
+{
+  "name": "ai-test-agent-ts",
+  "version": "1.0.0",
+  "description": "AI Test Agent - HarmonyOS Intelligent Testing System (TypeScript)",
+  "keywords": [
+    "harmonyos",
+    "testing",
+    "automation",
+    "ai",
+    "agent",
+    "mcp",
+    "typescript",
+    "react",
+    "self-healing"
+  ],
+  "homepage": "https://github.com/summer-hub/ai-test-agent-ts",
+  "bugs": {
+    "url": "https://github.com/summer-hub/ai-test-agent-ts/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/summer-hub/ai-test-agent-ts"
+  },
+  "license": "MIT",
+  "author": "AI Test Agent Team",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./hypium": {
+      "import": "./dist/hypium/index.mjs",
+      "require": "./dist/hypium/index.js",
+      "types": "./dist/hypium/index.d.ts"
+    },
+    "./fixer": {
+      "import": "./dist/fixer/index.mjs",
+      "require": "./dist/fixer/index.js",
+      "types": "./dist/fixer/index.d.ts"
+    },
+    "./mcp": {
+      "import": "./dist/mcp/index.mjs",
+      "require": "./dist/mcp/index.js",
+      "types": "./dist/mcp/index.d.ts"
+    },
+    "./agent": {
+      "import": "./dist/agent/index.mjs",
+      "require": "./dist/agent/index.js",
+      "types": "./dist/agent/index.d.ts"
+    },
+    "./skills": {
+      "import": "./dist/skills/index.mjs",
+      "require": "./dist/skills/index.js",
+      "types": "./dist/skills/index.d.ts"
+    },
+    "./knowledge": {
+      "import": "./dist/knowledge/index.mjs",
+      "require": "./dist/knowledge/index.js",
+      "types": "./dist/knowledge/index.d.ts"
+    },
+    "./evaluation": {
+      "import": "./dist/evaluation/index.mjs",
+      "require": "./dist/evaluation/index.js",
+      "types": "./dist/evaluation/index.d.ts"
+    }
+  },
+  "bin": {
+    "ai-test-agent": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "config",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "dev:agent": "tsx watch src/agent/test-agent.ts",
+    "dev:server": "tsx watch server/index.ts",
+    "dev:driver": "tsx watch src/hypium/driver/hypium-driver.ts",
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "build:all": "npm run build && npm run build:demo",
+    "build:demo": "tsc --project tsconfig.demo.json",
+    "typecheck": "tsc --noEmit",
+    "typecheck:full": "tsc --noEmit --project tsconfig.full.json",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "lint:report": "eslint src/**/*.ts --format json --output-file reports/eslint.json",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"demo/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"demo/**/*.ts\"",
+    "test": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:report": "vitest run --coverage --coverage.reporters=['text', 'html', 'lcov', 'json']",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui",
+    "test:report": "vitest run --reporter=json --output=reports/vitest-results.json",
+    "test:ci": "ci=true npx vitest run --reporter=json --outputFile=reports/ci-results.json",
+    "test:e2e:ci": "npx vitest run tests/e2e --reporter=json --outputFile=reports/e2e-results.json",
+    "ci:reset-device": "npx tsx scripts/reset-device.ts",
+    "ci:capture-failure": "npx tsx scripts/capture-failure.ts",
+    "ci:notify": "npx tsx scripts/notify-feishu.ts",
+    "clean": "rimraf dist coverage reports",
+    "clean:all": "rimraf dist coverage reports node_modules",
+    "prepare": "husky install",
+    "pre-commit": "lint-staged && npm run typecheck",
+    "commit": "git-cz",
+    "release": "standard-version",
+    "release:major": "standard-version --release-as major",
+    "release:minor": "standard-version --release-as minor",
+    "release:patch": "standard-version --release-as patch",
+    "docs:generate": "typedoc --out docs/api src",
+    "docs:generate:watch": "typedoc --watch --out docs/api src",
+    "analyze": "webpack --mode=production --analyze",
+    "bundle:size": "bundlesize",
+    "security:audit": "npm audit --audit-level=high",
+    "security:fix": "npm audit fix",
+    "dependency:check": "ncu",
+    "install:hooks": "husky install"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "/commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "type-enum": [
+        2,
+        "always",
+        [
+          "feat",
+          "fix",
+          "docs",
+          "style",
+          "refactor",
+          "perf",
+          "test",
+          "build",
+          "ci",
+          "chore",
+          "revert"
+        ]
+      ]
+    }
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write",
+      "vitest related --run"
+    ],
+    "*.json": [
+      "prettier --write"
+    ],
+    "*.md": [
+      "prettier --write"
+    ]
+  },
+  "bundlesize": [
+    {
+      "path": "./dist/index.js",
+      "maxSize": "200 kB"
+    }
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "engineStrict": true,
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.3.1",
+    "express": "^5.2.1",
+    "inquirer": "^9.2.12",
+    "ora": "^7.0.1",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1",
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5",
+    "yaml": "^2.3.4",
+    "zod": "^3.22.4"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-darwin-x64": "^4.6.1",
+    "@rollup/rollup-linux-x64-gnu": "^4.6.1",
+    "@rollup/rollup-win32-x64-msvc": "^4.6.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.4",
+    "@commitlint/config-conventional": "^18.4.4",
+    "@eslint/js": "^8.56.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/inquirer": "^9.0.3",
+    "@types/node": "^20.10.6",
+    "@types/uuid": "^9.0.7",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
+    "@vitest/coverage-v8": "^1.1.3",
+    "@vitest/ui": "^1.1.3",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.4.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "husky": "^8.0.3",
+    "jsdom": "^23.0.1",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "prettier-plugin-packagejson": "^2.4.7",
+    "rimraf": "^5.0.5",
+    "standard-version": "^9.3.2",
+    "tsup": "^8.0.1",
+    "tsx": "^4.7.0",
+    "typedoc": "^0.25.7",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.3"
+  },
+  "overrides": {
+    "undici": "^6.3.0"
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "label"
+    },
+    {
+      "name": "demo_index_title",
+      "value": "StackBlur Demo 导航"
+    },
+    {
+      "name": "demo_001_title",
+      "value": "【001】纯 ArkTS 图像模糊处理"
+    },
+    {
+      "name": "demo_001_index_desc",
+      "value": "展示 process() 基本模糊及 returnBlurredImage()/getImage() 结果访问接口"
+    },
+    {
+      "name": "demo_001_load_image_btn",
+      "value": "加载测试图片"
+    },
+    {
+      "name": "demo_001_get_result_btn",
+      "value": "获取最近模糊结果"
+    },
+    {
+      "name": "demo_001_blur_btn",
+      "value": "执行 ArkTS 模糊"
+    },
+    {
+      "name": "demo_001_get_origin_btn",
+      "value": "获取原始图像"
+    },
+    {
+      "name": "demo_001_radius_label",
+      "value": "模糊半径"
+    },
+    {
+      "name": "demo_002_title",
+      "value": "【002】Native C 高性能模糊对比"
+    },
+    {
+      "name": "demo_002_index_desc",
+      "value": "对比 processNatively() 与 processRenderScript() 及 process() 的性能耗时"
+    },
+    {
+      "name": "demo_002_arkts_btn",
+      "value": "ArkTS 模糊（耗时对比）"
+    },
+    {
+      "name": "demo_002_native_btn",
+      "value": "Native C 模糊"
+    },
+    {
+      "name": "demo_002_renderscript_btn",
+      "value": "RenderScript 兼容模糊"
+    },
+    {
+      "name": "demo_002_timing_label",
+      "value": "耗时对比"
+    },
+    {
+      "name": "demo_002_radius_label",
+      "value": "模糊半径"
+    },
+    {
+      "name": "demo_003_title",
+      "value": "【003】模糊图像保存文件"
+    },
+    {
+      "name": "demo_003_index_desc",
+      "value": "展示 saveIntoFile() 保存模糊结果到应用沙箱并读回验证"
+    },
+    {
+      "name": "demo_003_boundary_btn",
+      "value": "未模糊时保存（边界测试）"
+    },
+    {
+      "name": "demo_003_blur_save_btn",
+      "value": "执行模糊并保存"
+    },
+    {
+      "name": "demo_003_read_back_btn",
+      "value": "读取并预览保存的文件"
+    },
+    {
+      "name": "demo_003_result_label",
+      "value": "模糊结果"
+    },
+    {
+      "name": "demo_003_file_preview_label",
+      "value": "文件预览（读回）"
+    },
+    {
+      "name": "demo_003_radius_label",
+      "value": "模糊半径"
+    },
+    {
+      "name": "demo_004_title",
+      "value": "【004】安卓原库demo"
+    },
+    {
+      "name": "demo_004_index_desc",
+      "value": "安卓的原库 demo,界面与功能基本一致"
+    }
+  ]
+}

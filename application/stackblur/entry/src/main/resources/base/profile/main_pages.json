@@ -1,0 +1,10 @@
+{
+  "src": [
+    "pages/Index",
+    "pages/Benchmark",
+    "pages/DemoIndex",
+    "pages/001_ArkTsBlurPage",
+    "pages/002_NativeBlurComparePage",
+    "pages/003_BlurSaveFilePage"
+  ]
+}

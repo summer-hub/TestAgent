@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Test Agent · 3D Visualization</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #020617; color: #F8FAFC; font-family: 'Fira Sans', sans-serif;
+    overflow: hidden; height: 100vh; cursor: default;
+  }
+  #canvas-container { width: 100vw; height: 100vh; display: block; }
+
+  /* ===== HUD ===== */
+  .hud {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 16px; align-items: center;
+    background: rgba(15,23,42,0.85); backdrop-filter: blur(12px);
+    border: 1px solid #334155; border-radius: 12px;
+    padding: 12px 24px; font-size: 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    z-index: 10;
+  }
+  .hud-item { display: flex; align-items: center; gap: 8px; }
+  .hud-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .hud-dot.green { background: #22C55E; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+  .hud-dot.red { background: #EF4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+  .hud-dot.purple { background: #A855F7; box-shadow: 0 0 8px rgba(168,85,247,0.5); }
+  .hud-dot.blue { background: #3B82F6; box-shadow: 0 0 8px rgba(59,130,246,0.5); animation: pulse-hud 2s ease-in-out infinite; }
+  @keyframes pulse-hud { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .hud-label { color: #94A3B8; }
+  .hud-value { color: #F8FAFC; font-weight: 600; font-family: 'Fira Code', monospace; }
+  .hud-divider { width: 1px; height: 24px; background: #334155; }
+
+  .title {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+    font-family: 'Fira Code', monospace; font-size: 20px; font-weight: 600;
+    color: #F8FAFC; letter-spacing: 1px; z-index: 10;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+  }
+  .title-sub {
+    font-size: 13px; color: #64748B; text-align: center; margin-top: 4px;
+    font-family: 'Fira Sans', sans-serif; font-weight: 400;
+  }
+
+  .hint {
+    position: fixed; top: 80px; right: 24px;
+    font-size: 12px; color: #64748B; text-align: right; z-index: 10;
+    line-height: 1.8;
+    background: rgba(15,23,42,0.6); padding: 8px 12px;
+    border-radius: 8px; backdrop-filter: blur(8px);
+    border: 1px solid #1E293B;
+  }
+  .hint kbd {
+    display: inline-block; background: #1E293B; color: #94A3B8;
+    padding: 1px 6px; border-radius: 3px; font-size: 11px;
+    font-family: 'Fira Code', monospace; border: 1px solid #334155;
+  }
+
+  .loading-dots::after {
+    content: ''; animation: dots 1.5s steps(4, end) infinite;
+  }
+  @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+  @media (max-width: 768px) {
+    .entry-title { font-size: 28px; }
+    .entry-stats { gap: 16px; flex-wrap: wrap; justify-content: center; }
+    .entry-stat-value { font-size: 24px; }
+    .entry-btn { padding: 14px 32px; font-size: 16px; }
+    .hud { flex-wrap: wrap; width: 90%; padding: 10px 16px; bottom: 16px; gap: 8px; }
+    .hud-divider { display: none; }
+    .title { font-size: 16px; top: 16px; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 3D Scene ===== -->
+<div class="title" id="mainTitle">
+  AI Test Agent
+  <div class="title-sub">3D Real-Time Monitor</div>
+</div>
+
+<div class="hint" id="mainHint">
+  <kbd>drag</kbd> rotate · <kbd>scroll</kbd> zoom<br>
+  <kbd>mouse</kbd> dynamic lighting
+</div>
+
+<div id="canvas-container"></div>
+
+<div class="hud" id="mainHud">
+  <div class="hud-item">
+    <span class="hud-dot green"></span>
+    <span class="hud-label">Passed</span>
+    <span class="hud-value" id="passedCount">0</span>
+  </div>
+  <div class="hud-divider"></div>
+  <div class="hud-item">
+    <span class="hud-dot red"></span>
+    <span class="hud-label">Failed</span>
+    <span class="hud-value" id="failedCount">0</span>
+  </div>
+  <div class="hud-divider"></div>
+  <div class="hud-item">
+    <span class="hud-dot purple"></span>
+    <span class="hud-label">Packages</span>
+    <span class="hud-value" id="pkgCount">0</span>
+  </div>
+  <div class="hud-divider"></div>
+  <div class="hud-item">
+    <span class="hud-dot blue"></span>
+    <span class="hud-label">Pass Rate</span>
+    <span class="hud-value" style="color:#22C55E" id="passRate">—</span>
+  </div>
+  <div class="hud-divider"></div>
+  <div class="hud-item">
+    <span class="hud-label">Server</span>
+    <span class="hud-value" id="serverStatus">Online</span>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+
+<script>
+// ===== 实时指标刷新 =====
+(async function loadMetrics() {
+  try {
+    const metrics = await fetch('/api/metrics').then(r => r.json());
+    if (metrics.success) {
+      document.getElementById('passedCount').textContent = metrics.data.passed || 0;
+      document.getElementById('failedCount').textContent = metrics.data.failed || 0;
+      const rate = metrics.data.passRate || 0;
+      document.getElementById('passRate').textContent = rate + '%';
+      document.getElementById('passRate').style.color = rate > 80 ? '#22C55E' : rate > 50 ? '#F59E0B' : '#EF4444';
+    }
+  } catch {}
+  try {
+    const pkgs = await fetch('/api/packages').then(r => r.json());
+    if (pkgs.success) document.getElementById('pkgCount').textContent = pkgs.data.length;
+  } catch {}
+})();
+
+// 每 5s 刷新 HUD
+setInterval(async () => {
+  try {
+    const metrics = await fetch('/api/metrics').then(r => r.json());
+    if (metrics.success) {
+      document.getElementById('passedCount').textContent = metrics.data.passed || 0;
+      document.getElementById('failedCount').textContent = metrics.data.failed || 0;
+      const rate = metrics.data.passRate || 0;
+      document.getElementById('passRate').textContent = rate + '%';
+      document.getElementById('passRate').style.color = rate > 80 ? '#22C55E' : rate > 50 ? '#F59E0B' : '#EF4444';
+    }
+  } catch {}
+  try {
+    const pkgs = await fetch('/api/packages').then(r => r.json());
+    if (pkgs.success) document.getElementById('pkgCount').textContent = pkgs.data.length;
+  } catch {}
+}, 5000);
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const container = document.getElementById('canvas-container');
+
+// ===== Scene =====
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x020617);
+scene.fog = new THREE.FogExp2(0x020617, 0.025);
+
+const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+camera.position.set(10, 6, 14);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+container.appendChild(renderer.domElement);
+
+// ===== Controls =====
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.0;
+controls.target.set(0, 0, 0);
+controls.maxPolarAngle = Math.PI / 2.2;
+controls.minDistance = 5;
+controls.maxDistance = 25;
+window.controls = controls;
+
+controls.autoRotate = true;
+
+// ===== Post-processing =====
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(container.clientWidth, container.clientHeight),
+  0.3, 0.2, 0.1
+);
+composer.addPass(bloomPass);
+
+// ===== Lights =====
+const ambient = new THREE.AmbientLight(0x1E293B, 0.8);
+scene.add(ambient);
+const mainLight = new THREE.DirectionalLight(0xffffff, 2.5);
+mainLight.position.set(8, 12, 6);
+mainLight.castShadow = true;
+mainLight.shadow.mapSize.set(1024, 1024);
+scene.add(mainLight);
+const fill = new THREE.DirectionalLight(0x3B82F6, 1.0);
+fill.position.set(-6, 4, 8);
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0xA855F7, 0.6);
+rim.position.set(0, -4, -10);
+scene.add(rim);
+
+// ===== Floor =====
+const floorGeo = new THREE.PlaneGeometry(30, 30);
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x080e1a, roughness: 0.3, metalness: 0.1, transparent: true, opacity: 0.6 });
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -2.6;
+floor.receiveShadow = true;
+scene.add(floor);
+const gridHelper = new THREE.GridHelper(20, 30, 0x1E293B, 0x0F172A);
+gridHelper.position.y = -2.55;
+scene.add(gridHelper);
+
+// ===== 3D Devices =====
+function createPhoneDevice(color, pos, rotY) {
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshPhysicalMaterial({ color, roughness: 0.2, metalness: 0.8, clearcoat: 0.2 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 5.2, 0.3), bodyMat);
+  body.castShadow = true;
+  group.add(body);
+  const screenMat = new THREE.MeshPhysicalMaterial({ color: 0x020617, emissive: 0x3B82F6, emissiveIntensity: 0.2, roughness: 0.05, metalness: 0.1 });
+  const screen = new THREE.Mesh(new THREE.BoxGeometry(2.2, 4.6, 0.02), screenMat);
+  screen.position.z = 0.16;
+  group.add(screen);
+  for (let i = 0; i < 8; i++) {
+    const h = 0.08 + Math.random() * 0.3;
+    const barMat = new THREE.MeshPhysicalMaterial({ color: 0x0F172A, emissive: 0x22C55E, emissiveIntensity: 0.1 + Math.random() * 0.3, roughness: 0.3 });
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, h, 0.01), barMat);
+    bar.position.set(-0.9 + i * 0.26, 0.2 + h / 2 - 0.5, 0.18);
+    group.add(bar);
+  }
+  group.position.copy(pos);
+  group.rotation.y = rotY;
+  return group;
+}
+const devices = [
+  createPhoneDevice(0x1E293B, new THREE.Vector3(-4, -0.5, -1), 0.3),
+  createPhoneDevice(0x1E293B, new THREE.Vector3(-2, -0.5, 2), -0.4),
+  createPhoneDevice(0x1E293B, new THREE.Vector3(3, -0.5, -2), -0.6),
+  createPhoneDevice(0x1E293B, new THREE.Vector3(5, -0.5, 1), 0.5),
+];
+devices.forEach(d => scene.add(d));
+
+// ===== Central Data Globe =====
+const globeMat = new THREE.MeshPhysicalMaterial({ color: 0x0F172A, roughness: 0.1, metalness: 0.8, clearcoat: 0.5, clearcoatRoughness: 0.2, transparent: true, opacity: 0.95 });
+const globe = new THREE.Mesh(new THREE.SphereGeometry(2.2, 48, 48), globeMat);
+globe.position.set(0, 0.2, 0);
+globe.castShadow = true;
+scene.add(globe);
+
+const dotCount = 200;
+const dotPos = new Float32Array(dotCount * 3);
+const dotCol = new Float32Array(dotCount * 3);
+const dotData = [];
+for (let i = 0; i < dotCount; i++) {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  const r = 2.22;
+  dotPos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+  dotPos[i*3+1] = r * Math.cos(phi);
+  dotPos[i*3+2] = r * Math.sin(phi) * Math.sin(theta);
+  const rand = Math.random();
+  let c;
+  if (rand < 0.78) c = [0.13, 0.77, 0.37];
+  else if (rand < 0.90) c = [0.94, 0.27, 0.27];
+  else if (rand < 0.96) c = [0.66, 0.33, 0.97];
+  else c = [0.23, 0.51, 0.96];
+  dotCol[i*3] = c[0]; dotCol[i*3+1] = c[1]; dotCol[i*3+2] = c[2];
+  dotData.push({ theta, phi, r });
+}
+const dotGeo = new THREE.BufferGeometry();
+dotGeo.setAttribute('position', new THREE.BufferAttribute(dotPos, 3));
+dotGeo.setAttribute('color', new THREE.BufferAttribute(dotCol, 3));
+const dotMat = new THREE.PointsMaterial({ size: 0.1, vertexColors: true, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
+const dotPoints = new THREE.Points(dotGeo, dotMat);
+globe.add(dotPoints);
+
+// Floating data points
+const floatCount = 80;
+const floatPos = new Float32Array(floatCount * 3);
+const floatCol = new Float32Array(floatCount * 3);
+const floatVel = [];
+for (let i = 0; i < floatCount; i++) {
+  const a = Math.random() * Math.PI * 2;
+  const p = Math.acos(2 * Math.random() - 1);
+  const rad = 2.8 + Math.random() * 1.5;
+  floatPos[i*3] = rad * Math.sin(p) * Math.cos(a);
+  floatPos[i*3+1] = rad * Math.cos(p);
+  floatPos[i*3+2] = rad * Math.sin(p) * Math.sin(a);
+  floatCol[i*3] = 0.23 + Math.random() * 0.3; floatCol[i*3+1] = 0.51 + Math.random() * 0.3; floatCol[i*3+2] = 0.96;
+  floatVel.push({ a, p, rad, speed: 0.002 + Math.random() * 0.005 });
+}
+const floatGeo = new THREE.BufferGeometry();
+floatGeo.setAttribute('position', new THREE.BufferAttribute(floatPos, 3));
+floatGeo.setAttribute('color', new THREE.BufferAttribute(floatCol, 3));
+const floatMat = new THREE.PointsMaterial({ size: 0.06, vertexColors: true, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false });
+const floatPoints = new THREE.Points(floatGeo, floatMat);
+scene.add(floatPoints);
+
+// Data stream lines
+function createDataStream(from, to, color) {
+  const mid = new THREE.Vector3((from.x + to.x) / 2, (from.y + to.y) / 2 + 2, (from.z + to.z) / 2);
+  const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
+  const geo = new THREE.TubeGeometry(curve, 30, 0.015, 6, false);
+  const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.15 });
+  return new THREE.Mesh(geo, mat);
+}
+const colors = [0x3B82F6, 0x22C55E, 0xA855F7, 0x3B82F6];
+devices.forEach((d, i) => {
+  const from = new THREE.Vector3(d.position.x, d.position.y + 0.5, d.position.z);
+  scene.add(createDataStream(from, new THREE.Vector3(0, 0.2, 0), colors[i]));
+});
+
+// Stars
+const starCount = 1500;
+const starPos = new Float32Array(starCount * 3);
+for (let i = 0; i < starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 100;
+const starGeo = new THREE.BufferGeometry();
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const starMat = new THREE.PointsMaterial({ color: 0x64748B, size: 0.05, transparent: true, opacity: 0.6 });
+const stars = new THREE.Points(starGeo, starMat);
+scene.add(stars);
+
+// Rings
+function createTorusRing(radius, y, color, opacity) {
+  const geo = new THREE.TorusGeometry(radius, 0.02, 16, 64);
+  const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.y = y;
+  mesh.rotation.x = Math.PI / 2;
+  mesh.rotation.z = Math.random() * Math.PI;
+  return mesh;
+}
+const rings = [
+  createTorusRing(3.0, -1.8, 0x3B82F6, 0.2),
+  createTorusRing(3.8, 0.8, 0xA855F7, 0.15),
+  createTorusRing(4.5, -0.5, 0x22C55E, 0.12),
+  createTorusRing(5.2, 1.5, 0x3B82F6, 0.08),
+];
+rings.forEach(r => scene.add(r));
+
+// ===== Animation =====
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  devices.forEach((d, i) => {
+    d.position.y = -0.5 + Math.sin(t * 0.7 + i * 1.5) * 0.2;
+    d.rotation.z = Math.sin(t * 0.4 + i * 0.8) * 0.02;
+    d.rotation.x = Math.sin(t * 0.3 + i * 1.2) * 0.01;
+  });
+  globe.rotation.y = t * 0.12;
+  globe.rotation.x = Math.sin(t * 0.08) * 0.05;
+  const dotPosAttr = dotPoints.geometry.attributes.position;
+  for (let i = 0; i < dotCount; i++) {
+    const d = dotData[i];
+    const theta = d.theta + t * 0.02;
+    const phi = d.phi + Math.sin(t * 0.1 + i) * 0.005;
+    const pulse = 1 + Math.sin(t * 0.5 + i * 3) * 0.01;
+    const r = d.r * pulse;
+    dotPosAttr.array[i*3] = r * Math.sin(phi) * Math.cos(theta);
+    dotPosAttr.array[i*3+1] = r * Math.cos(phi);
+    dotPosAttr.array[i*3+2] = r * Math.sin(phi) * Math.sin(theta);
+  }
+  dotPosAttr.needsUpdate = true;
+  const fp = floatPoints.geometry.attributes.position;
+  for (let i = 0; i < floatCount; i++) {
+    const v = floatVel[i];
+    v.a += v.speed;
+    fp.array[i*3] = v.rad * Math.sin(v.p) * Math.cos(v.a);
+    fp.array[i*3+1] = v.rad * Math.cos(v.p) + Math.sin(t * 0.3 + i) * 0.1;
+    fp.array[i*3+2] = v.rad * Math.sin(v.p) * Math.sin(v.a);
+  }
+  fp.needsUpdate = true;
+  rings.forEach((r, i) => {
+    r.rotation.z = t * (0.05 + i * 0.02);
+    r.material.opacity = 0.08 + Math.sin(t * 0.3 + i) * 0.04;
+  });
+  stars.rotation.y = t * 0.005;
+  controls.update();
+  composer.render();
+}
+animate();
+
+function onResize() {
+  const w = container.clientWidth, h = container.clientHeight;
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  renderer.setSize(w, h); composer.setSize(w, h);
+}
+window.addEventListener('resize', onResize);
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) controls.autoRotate = false;
+</script>
+</body>
+</html>

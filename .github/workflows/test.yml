@@ -1,0 +1,133 @@
+# OHOS E2E Test Pipeline
+#
+# 每次 push / PR 自动触发，在 self-hosted runner 上执行
+# HarmonyOS 设备 E2E 测试。
+#
+# 前置条件:
+#   1. Self-hosted runner 机器已安装 HDC + Node.js 20
+#   2. OHOS 设备已通过 USB/网络连接
+#   3. Secrets: DEVICE_ID, FEISHU_WEBHOOK_URL
+#
+name: OHOS E2E Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 10 * * 1-5'  # 工作日 18:00
+  workflow_dispatch:        # 手动触发
+
+env:
+  BUNDLE: com.example.stackblur
+  NODE_VERSION: '20'
+
+jobs:
+  e2e:
+    name: E2E Test on OHOS Device
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npx vitest run tests/unit
+
+      - name: Check HDC connection
+        id: hdc_check
+        run: |
+          npx tsx -e "
+            const {execSync} = require('child_process');
+            const r = execSync('hdc -t ${{ env.DEVICE_ID }} shell echo connected', {encoding:'utf8', timeout:10000});
+            console.log('HDC:', r.trim());
+          "
+        continue-on-error: true
+
+      - name: Reset device state
+        if: steps.hdc_check.outcome == 'success'
+        run: npx tsx scripts/reset-device.ts
+        env:
+          DEVICE_ID: ${{ env.DEVICE_ID }}
+
+      - name: E2E tests
+        id: e2e
+        if: steps.hdc_check.outcome == 'success'
+        run: |
+          npx vitest run tests/e2e --reporter=json --outputFile=reports/e2e-results.json
+        continue-on-error: true
+        env:
+          DEVICE_ID: ${{ env.DEVICE_ID }}
+          CI: 'true'
+
+      - name: Capture failure artifacts
+        if: steps.e2e.outcome == 'failure'
+        run: npx tsx scripts/capture-failure.ts --test-name="e2e_${{ github.sha }}"
+        continue-on-error: true
+        env:
+          DEVICE_ID: ${{ env.DEVICE_ID }}
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-${{ github.sha }}
+          path: reports/failures/
+          retention-days: 14
+
+      - name: Collect test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report-${{ github.sha }}
+          path: reports/e2e-results.json
+          retention-days: 30
+
+      - name: Build test summary
+        id: summary
+        if: always()
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = './reports/e2e-results.json';
+            let pass = 0, fail = 0;
+            if (fs.existsSync(p)) {
+              const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+              pass = j.passed || 0;
+              fail = j.failed || 0;
+            }
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'pass=' + pass + '\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'fail=' + fail + '\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'duration=' + Math.floor(process.uptime()) + '\n');
+          "
+
+      - name: Notify Feishu
+        if: always()
+        run: >-
+          npx tsx scripts/notify-feishu.ts
+          --pass=${{ steps.summary.outputs.pass || '0' }}
+          --fail=${{ steps.summary.outputs.fail || '0' }}
+          --duration=${{ steps.summary.outputs.duration || '0' }}
+          --branch=${{ github.ref_name }}
+          --commit=${{ github.sha }}
+          --commit-msg="${{ github.event.head_commit.message || 'manual trigger' }}"
+        env:
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+
+      - name: Fail if tests failed
+        if: steps.e2e.outcome == 'failure'
+        run: exit 1
